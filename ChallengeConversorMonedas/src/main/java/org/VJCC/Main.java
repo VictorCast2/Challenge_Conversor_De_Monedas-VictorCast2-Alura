@@ -6,6 +6,7 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        ConversionHistory historial = new ConversionHistory();
 
         while (true) {
             // Mostrar menú principal
@@ -16,10 +17,15 @@ public class Main {
                 switch (opcion) {
                     case 1:
                         // Mostrar submenú de conversor de monedas
-                        mostrarMenuConversorMonedas(scanner);
+                        mostrarMenuConversorMonedas(scanner, historial);
                         break;
 
                     case 2:
+                        // Mostrar historial de conversiones
+                        historial.mostrarHistorial();
+                        break;
+
+                    case 3:
                         // Salir
                         System.out.println("Saliendo...");
                         scanner.close();
@@ -38,13 +44,14 @@ public class Main {
         return """
                 *<------->* Menú de Opciones *<------->*
                 1. Conversor de Monedas
-                2. Salir
+                2. Ver Historial de Conversiones
+                3. Salir
                 *<------->*                  *<------->*
                 """;
     }
 
     // Submenú de Conversor de Monedas
-    public static void mostrarMenuConversorMonedas(Scanner scanner) {
+    public static void mostrarMenuConversorMonedas(Scanner scanner, ConversionHistory historial) {
         System.out.println(MenuConversorMonedas());
         System.out.print("Selecciona una opción: ");
         int opcion = scanner.nextInt();
@@ -52,7 +59,7 @@ public class Main {
         switch (opcion) {
             case 1:
                 // Realizar conversión de monedas
-                conversorMonedas(scanner);
+                conversorMonedas(scanner, historial);
                 break;
             case 2:
                 System.out.println("Regresando al menú principal...");
@@ -72,22 +79,16 @@ public class Main {
     }
 
     // Función para realizar la conversión de monedas
-    public static void conversorMonedas(Scanner scanner) {
+    public static void conversorMonedas(Scanner scanner, ConversionHistory historial) {
         try {
             // Mostrar las monedas disponibles
-            System.out.println("Monedas disponibles:");
-            System.out.println("ARS - Peso argentino");
-            System.out.println("BOB - Boliviano boliviano");
-            System.out.println("BRL - Real brasileño");
-            System.out.println("CLP - Peso chileno");
-            System.out.println("COP - Peso colombiano");
-            System.out.println("USD - Dólar estadounidense");
+            MonedaValidator.mostrarMonedasDisponibles();
 
             // Ingresar moneda base
-            String baseCurrency = obtenerMonedaValida(scanner, "Ingresa la moneda base (Ejemplo: USD): ");
+            String baseCurrency = MonedaValidator.obtenerMonedaValida(scanner, "Ingresa la moneda base (Ejemplo: USD): ");
 
             // Ingresar moneda destino
-            String targetCurrency = obtenerMonedaValida(scanner, "Ingresa la moneda destino (Ejemplo: EUR): ");
+            String targetCurrency = MonedaValidator.obtenerMonedaValida(scanner, "Ingresa la moneda destino (Ejemplo: EUR): ");
 
             // Ingresar cantidad a convertir
             System.out.print("Ingresa la cantidad a convertir: ");
@@ -108,30 +109,13 @@ public class Main {
             // Guardar tasas filtradas en archivo
             CurrencyParser.guardarTasasFiltradasEnArchivo(jsonResponse);
 
+            // Registrar la conversión en el historial
+            historial.registrarConversion(baseCurrency, targetCurrency, amount, convertedAmount);
+
+        } catch (CurrencyAPIException e) {
+            System.out.println("Error con la API: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("Ocurrió un error al realizar la conversión: " + e.getMessage());
         }
     }
-
-    // Función para obtener una moneda válida
-    public static String obtenerMonedaValida(Scanner scanner, String mensaje) {
-        String moneda;
-        while (true) {
-            System.out.print(mensaje);
-            moneda = scanner.next().toUpperCase();
-            if (esMonedaValida(moneda)) {
-                break;
-            } else {
-                System.out.println("Moneda no válida. Por favor, ingresa una moneda válida de las siguientes: ARS, BOB, BRL, CLP, COP, USD.");
-            }
-        }
-        return moneda;
-    }
-
-    // Función para validar si la moneda ingresada es válida
-    public static boolean esMonedaValida(String moneda) {
-        return moneda.equals("ARS") || moneda.equals("BOB") || moneda.equals("BRL") ||
-                moneda.equals("CLP") || moneda.equals("COP") || moneda.equals("USD");
-    }
-
 }
